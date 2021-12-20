@@ -14,11 +14,12 @@ const cors = require('koa2-cors');
 onerror(app)
 
 app.use(cors({
-    origin: "*",
-    // origin: 'http://localhost:8080',
-    maxAge: 2592000,
-    // 必要配置
-    credentials: true
+    origin: 'http://localhost:8080',
+    maxAge: 3600, //预检请求的有效期
+    credentials: true, //是否允许发送Cookie
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], //设置所允许的HTTP请求方法
+    allowHeaders: ['Content-Type', 'Authorization', 'Accept'], //设置服务器支持的所有头信息字段
+    exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'] //设置获取其他自定义字段
 }));
 // middlewares
 app.use(bodyparser({
