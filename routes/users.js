@@ -38,6 +38,10 @@ router.get('/email', async(ctx, next) => {
         var json = { userName, email, password, code, date };
         await insert('registerCode', json); //将获取到的验证码存进数据库，待会提交时要检查是不是一致
         await nodemail(mail); //发送邮件
+        // 从存放验证码的表中删除
+        setTimeout(async() => {
+            await deleteData('registerCode', { userName: userName })
+        }, 60000);
     }
 })
 
@@ -54,11 +58,6 @@ router.get('/register', async(ctx, next) => {
     } else {
         ctx.body = { 'status': 0 }
     }
-    // 从存放验证码的表中删除
-    setTimeout(async() => {
-        await deleteData('registerCode', { userName: userName })
-    }, 30000);
-
 })
 
 // 用户登录接口
