@@ -65,7 +65,7 @@ router.get('/login', async(ctx, next) => {
     let userName = ctx.query.userName;
     let password = ctx.query.password;
     let result = await getdata('IdInfo', { userName: userName });
-    if (result[0].password === password) {
+    if (result[0] && result[0].password === password) {
         ctx.cookies.set('userinfo', userName, {
             maxAge: 60 * 1000 * 60
         });
