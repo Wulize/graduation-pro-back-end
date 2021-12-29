@@ -1,7 +1,7 @@
 const router = require('koa-router')()
-const { insert, getdata, deleteData } = require('../dao')
+const { insert, getdata, deleteData } = require('../dao/dao')
 const nodemail = require('../nodemailer')
-const tool = require('../constant')
+const tool = require('../util/constant')
 router.prefix('/users')
 
 router.get('/', function(ctx, next) {
@@ -23,12 +23,12 @@ router.get('/email', async(ctx, next) => {
     } else if (result.length > 0) {
         ctx.body = { success: false, message: "账号已经存在" }
     } else {
-        ctx.body = { success: true, message: "账号可行" }; //数据传回前台
+        ctx.body = { success: true, message: "验证码已经发送，请注意查收哦。" }; //数据传回前台
         let mail = {
             // 发件人
             from: '875903125@qq.com',
             // 主题
-            subject: 'LBS旅游推荐用户注册验证码', //邮箱主题
+            subject: 'LBS旅游推荐系统用户注册验证码', //邮箱主题
             // 收件人
             to: email, //前台传过来的邮箱
             // 邮件内容，HTML格式
