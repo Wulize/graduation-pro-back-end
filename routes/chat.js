@@ -30,13 +30,12 @@ app.ws.use((ctx, next) => {
             } else {
                 ctxs[data.receiver].websocket.send(JSON.stringify(info));
             }
-
         }
     });
     ctx.websocket.on("close", (message) => {
         /* 连接关闭时, 清理 上下文数组, 防止报错 */
         let key = tool.findKey(ctx, ctxs);
-        console.log(key + "关闭了链接")
+        console.log(key + "关闭了链接");
         delete ctxs[key];
     });
 });
