@@ -66,7 +66,8 @@ router.get('/login', async(ctx, next) => {
     let password = ctx.query.password;
     let result = await getdata('IdInfo', { userName: userName });
     if (result[0] && result[0].password === password) {
-        ctx.cookies.set('userinfo', userName, {
+        // koa不能直接设置中文cookie,转成base64编码
+        ctx.cookies.set('userinfo', new Buffer(userName).toString('base64'), {
             maxAge: 60 * 1000 * 60
         });
         ctx.body = { 'status': 1, info: 'login sucess' }

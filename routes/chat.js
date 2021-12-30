@@ -49,7 +49,6 @@ router.get('/json', async(ctx, next) => {
 router.get('/getFriendList', async(ctx, next) => {
     let userName = ctx.query.userName;
     let res = await getdata('friendIList', { userName });
-    console.log(res[0])
     const friendList = (res[0] || {}).friendList || ['请先添加好友']
     ctx.body = { friendList };
 })
