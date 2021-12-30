@@ -62,6 +62,11 @@ router.get('/register', async(ctx, next) => {
 
 // 用户登录接口
 router.get('/login', async(ctx, next) => {
+    let cookie = ctx.cookies.get('userinfo');
+    if (cookie) {
+        ctx.body = { 'status': 1, info: 'login sucess', userName: new Buffer(cookie, 'base64').toString() };
+        return;
+    }
     let userName = ctx.query.userName;
     let password = ctx.query.password;
     let result = await getdata('IdInfo', { userName: userName });
@@ -70,7 +75,7 @@ router.get('/login', async(ctx, next) => {
         ctx.cookies.set('userinfo', new Buffer(userName).toString('base64'), {
             maxAge: 60 * 1000 * 60
         });
-        ctx.body = { 'status': 1, info: 'login sucess' }
+        ctx.body = { 'status': 1, info: 'login sucess', userName: userName }
     } else {
         ctx.body = { 'status': 0, info: 'login fail' }
     }

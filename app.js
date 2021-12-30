@@ -15,7 +15,7 @@ const cors = require('koa2-cors');
 onerror(app)
 
 app.use(cors({
-    origin: '*',
+    origin: 'http://localhost:8080',
     maxAge: 7200, //预检请求的有效期
     credentials: true, //是否允许发送Cookie
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], //设置所允许的HTTP请求方法
