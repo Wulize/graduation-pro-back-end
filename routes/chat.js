@@ -8,14 +8,20 @@ let ctxs = {}; //cg
 app.listen(3001); //cg
 router.prefix('/chat')
 
-app.ws.use((ctx, next) => {
+app.ws.use(async(ctx, next) => {
     /* 每打开一个连接就往 上线文数组中 添加一个上下文 */
     let { id } = ctx.query;
     ctxs[id] = ctx;
+    // 首次连接将未读消息推送给用户
+    const unreadMsg = await getdata('unreadMsg', { receiver: id });
+    if (unreadMsg.length)
+        unreadMsg.forEach(element => {
+            ctxs[id].websocket.send(JSON.stringify(element));
+        });
+    await deleteData('unreadMsg', { receiver: id });
     console.log(id + '  connect');
-    ctx.websocket.on("message", (message) => {
+    ctx.websocket.on("message", async(message) => {
         let data = JSON.parse(message); //处理数据
-        console.log(data);
         if (data.type == "chat") { //聊天模式 分配对应数据
             let info = data;
             if (!ctxs[data.receiver]) {
@@ -27,6 +33,7 @@ app.ws.use((ctx, next) => {
                     send_name: '机器人代发',
                     receiver: data.send_id,
                 }));
+                await insert('unreadMsg', info);
             } else {
                 ctxs[data.receiver].websocket.send(JSON.stringify(info));
             }
@@ -46,11 +53,19 @@ router.get('/json', async(ctx, next) => {
         }
     })
     // 聊天模块相关接口
+    // 获取好友列表
 router.get('/getFriendList', async(ctx, next) => {
+        let userName = ctx.query.userName;
+        let res = await getdata('friendIList', { userName });
+        const friendList = (res[0] || {}).friendList || ['请先添加好友']
+        ctx.body = { friendList };
+    })
+    // 获取未读消息数量
+router.get('/getMsgNum', async(ctx, next) => {
     let userName = ctx.query.userName;
-    let res = await getdata('friendIList', { userName });
-    const friendList = (res[0] || {}).friendList || ['请先添加好友']
-    ctx.body = { friendList };
+    let res = await getdata('unreadMsg', { receiver: userName });
+    const MsgNum = (res || []).length;
+    ctx.body = { MsgNum };
 })
 
 

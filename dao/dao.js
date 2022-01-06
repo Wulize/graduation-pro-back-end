@@ -49,7 +49,7 @@ async function deleteData(collectionName, condition) {
             MongoClient.connect(url, { useUnifiedTopology: true }, function(err, db) {
                 if (err) throw err;
                 dbo = db.db("touristInfo");
-                dbo.collection(collectionName).deleteOne(condition, (err, result) => {
+                dbo.collection(collectionName).deleteMany(condition, (err, result) => {
                     if (err) {
                         reject(err);
                         return;
