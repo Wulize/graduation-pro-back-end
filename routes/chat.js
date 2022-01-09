@@ -28,7 +28,7 @@ app.ws.use(async(ctx, next) => {
     online = Object.keys(ctxs);
 
     online.forEach(async(item) => {
-        let myFriends = (await getdata('friendIList', { userName: item }))[0].friendList || ['请先添加好友'];
+        let myFriends = ((await getdata('friendIList', { userName: item }))[0] || {}).friendList || ['请先添加好友'];
         // 求交集，给出在线好友列表
         let onlineFriend = myFriends.filter((val) => new Set(online).has(val));
         if (onlineFriend !== []) {
@@ -40,13 +40,31 @@ app.ws.use(async(ctx, next) => {
     console.log(id + '  connect');
     ctx.websocket.on("message", async(message) => {
         let data = JSON.parse(message); //处理数据
-        if (data.type == "chat") { //聊天模式 分配对应数据
+        //聊天模式 分配对应数据
+        if (data.type == "chat") {
             let info = data;
             if (!ctxs[data.receiver]) {
                 ctx.websocket.send(JSON.stringify({
                     type: "chat",
                     send_time: new Date(),
-                    send_msg: '对方未上线',
+                    send_msg: '对方未上线,已存入留言中',
+                    send_id: data.receiver,
+                    send_name: '机器人代发',
+                    receiver: data.send_id,
+                }));
+                await insert('unreadMsg', info);
+            } else {
+                ctxs[data.receiver].websocket.send(JSON.stringify(info));
+            }
+        }
+        // 添加好友接口
+        else if (data.type === "add") {
+            let info = data;
+            if (!ctxs[data.receiver]) {
+                ctx.websocket.send(JSON.stringify({
+                    type: "add",
+                    send_time: new Date(),
+                    send_msg: '对方未上线,已存入留言中',
                     send_id: data.receiver,
                     send_name: '机器人代发',
                     receiver: data.send_id,
@@ -92,10 +110,46 @@ router.get('/getFriendList', async(ctx, next) => {
     })
     // 获取未读消息数量
 router.get('/getMsgNum', async(ctx, next) => {
-    let userName = ctx.query.userName;
-    let res = await getdata('unreadMsg', { receiver: userName });
-    const MsgNum = (res || []).length;
-    ctx.body = { MsgNum };
+        let userName = ctx.query.userName;
+        let res = await getdata('unreadMsg', { receiver: userName });
+        const MsgNum = (res || []).length;
+        ctx.body = { MsgNum };
+    })
+    // 获取查找好友时匹配的用户列表
+router.get('/getMatchFriends', async(ctx, next) => {
+        let target = ctx.query.id;
+        let userName = ctx.query.userName;
+        // 所有用户
+        let allUsers = await getdata("IdInfo", {});
+        let index = allUsers.findIndex(item => item.userName === userName);
+        allUsers.splice(index, 1);
+        // 我的好友
+        let myFriends = ((await getdata('friendIList', { userName }))[0] || {}).friendList;
+        let result = allUsers.filter((item) => {
+            return item.userName.indexOf(target) > -1 && !(myFriends || []).includes(item.userName);
+        })
+        ctx.body = { friends: result };
+    })
+    // 添加好友接口
+router.get('/addFriend', async(ctx, next) => {
+    let { userName, friend } = ctx.query;
+    let friendArr_1 = await getdata('friendIList', { userName });
+    let friendArr_2 = await getdata('friendIList', { userName: friend });
+    const friendList_1 = (friendArr_1[0] || {}).friendList || [];
+    const friendList_2 = (friendArr_2[0] || {}).friendList || [];
+    if (!friendList_1.includes(friend))
+        friendList_1.push(friend);
+    if (!friendList_2.includes(userName))
+        friendList_2.push(userName);
+    await deleteData('friendIList', { userName: userName });
+    await deleteData('friendIList', { userName: friend });
+    await insert('friendIList', { userName: userName, friendList: friendList_1 });
+    await insert('friendIList', { userName: friend, friendList: friendList_2 });
+    ctxs[friend].websocket.send(JSON.stringify({ type: "renewList", newFriend: userName }));
+    ctx.body = {
+        code: "1",
+        msg: "添加成功"
+    }
 })
 
 
