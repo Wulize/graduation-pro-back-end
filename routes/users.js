@@ -64,7 +64,10 @@ router.get('/register', async(ctx, next) => {
 router.get('/login', async(ctx, next) => {
     let cookie = ctx.cookies.get('userinfo');
     if (cookie) {
-        ctx.body = { 'status': 1, info: 'login sucess', userName: new Buffer(cookie, 'base64').toString() };
+        let userName = new Buffer(cookie, 'base64').toString();
+        let result = (await getdata('IdInfo', { userName: userName }))[0];
+        const { avatarUrl = "" } = result;
+        ctx.body = { 'status': 1, info: 'login sucess', userName: new Buffer(cookie, 'base64').toString(), avatarUrl };
         return;
     }
     let userName = ctx.query.userName;
@@ -73,11 +76,21 @@ router.get('/login', async(ctx, next) => {
     if (result[0] && result[0].password === password) {
         // koa不能直接设置中文cookie,转成base64编码
         ctx.cookies.set('userinfo', new Buffer(userName).toString('base64'), {
-            maxAge: 60 * 1000 * 60
+            maxAge: 60 * 1000 * 60 * 24
         });
-        ctx.body = { 'status': 1, info: 'login sucess', userName: userName }
+        ctx.body = { 'status': 1, info: 'login sucess', userName: userName, avatarUrl: result[0].avatarUrl }
     } else {
         ctx.body = { 'status': 0, info: 'login fail' }
+    }
+})
+
+router.get('/renewInfo', async(ctx, next) => {
+    let { userName, password, avatarUrl, email, date } = ctx.query;
+    await deleteData('IdInfo', { userName });
+    await insert('IdInfo', { userName, password, avatarUrl, email, date })
+    ctx.body = {
+        code: 1,
+        msg: "修改信息成功！"
     }
 })
 
