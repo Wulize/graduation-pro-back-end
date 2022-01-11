@@ -46,14 +46,6 @@ app.ws.use(async(ctx, next) => {
         if (data.type == "chat") {
             let info = data;
             if (!ctxs[data.receiver]) {
-                ctx.websocket.send(JSON.stringify({
-                    type: "chat",
-                    send_time: new Date(),
-                    send_msg: '对方未上线,已存入留言中',
-                    send_id: data.receiver,
-                    send_name: '机器人代发',
-                    receiver: data.send_id,
-                }));
                 await insert('unreadMsg', info);
             } else {
                 ctxs[data.receiver].websocket.send(JSON.stringify(info));
@@ -63,14 +55,14 @@ app.ws.use(async(ctx, next) => {
         else if (data.type === "add") {
             let info = data;
             if (!ctxs[data.receiver]) {
-                ctx.websocket.send(JSON.stringify({
-                    type: "add",
-                    send_time: new Date(),
-                    send_msg: '对方未上线,已存入留言中',
-                    send_id: data.receiver,
-                    send_name: '机器人代发',
-                    receiver: data.send_id,
-                }));
+                // ctx.websocket.send(JSON.stringify({
+                //     type: "add",
+                //     send_time: new Date().toLocaleString(),
+                //     send_msg: '对方未上线,已存入留言中',
+                //     send_id: data.receiver,
+                //     send_name: '机器人代发',
+                //     receiver: data.send_id,
+                // }));
                 await insert('unreadMsg', info);
             } else {
                 ctxs[data.receiver].websocket.send(JSON.stringify(info));
