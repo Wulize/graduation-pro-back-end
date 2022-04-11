@@ -8,6 +8,7 @@ const logger = require('koa-logger')
 const index = require('./routes/index')
 const users = require('./routes/users')
 const chat = require('./routes/chat')
+const pathRecommend = require('./routes/pathRecommend')
 
 const cors = require('koa2-cors');
 
@@ -43,6 +44,7 @@ app.use(async(ctx, next) => {
 app.use(index.routes(), index.allowedMethods())
 app.use(users.routes(), users.allowedMethods())
 app.use(chat.routes(), chat.allowedMethods())
+app.use(pathRecommend.routes(), pathRecommend.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {
