@@ -22,12 +22,12 @@ class AntSystem {
     constructor(cityArr) {
             this.cityArr = cityArr;
             this.cityNum = cityArr.length; //景点数量
-            this.antNum = this.cityNum * 2 + 5; //            蚂蚁数量
+            this.antNum = this.cityNum * 2 + 5; // 蚂蚁数量
             this.Q = 50; // 常数
             this.iter = 1; // 从1开始
             this.iter_max = 100; //循环300次
             this.rho = 0.2; //信息素挥发因子，经验[0.2，0.5]之间
-            this.alpha = 2; //信息素的重要性，[1,4]，过大的话导致过早陷入局部最优点
+            this.alpha = 1; //信息素的重要性，[1,4]，过大的话导致过早陷入局部最优点
             this.beta = 5; //启发函数因子，[3,5]
             this.distance = new Array(this.cityNum).fill(new Array()); //景点距离数组
             this.heu_f = new Array(this.cityNum).fill(new Array(this.cityNum)) //启发函数
@@ -63,7 +63,9 @@ class AntSystem {
         while (this.iter <= this.iter_max) {
             //遍历城市，记录相关的的路径、长度、更新信息素
             this.path_table = [];
-            let length = new Array(); //计算各个蚂蚁的路径长度
+            let length = new Array(), //计算各个蚂蚁的路径长度
+                pheromone_sum = 0, //全部的信息素浓度之和
+                best_router_pheromone; //一直最短路线的信息素浓度值和
             for (let i = 0; i < this.antNum; i++) {
                 // console.log('------------------');
                 let p = [], // 记录各个可访问城市的概率
@@ -125,6 +127,8 @@ class AntSystem {
             this.length_best[this.iter - 1] = min_length;
             //更新信息素的浓度
             // 信息素的衰减
+            // pheromone_sum 当前的信息素浓度之和
+            pheromone_sum = 0;
             for (let i = 0; i < this.cityNum; i++) {
                 for (let j = 0; j < this.cityNum; j++) {
                     this.pheromone_table[i][j] = this.pheromone_table[i][j] * (1 - this.rho);
@@ -133,14 +137,25 @@ class AntSystem {
             for (let i = 0; i < this.path_table.length; i++) {
                 for (let j = 0; j < this.cityNum - 1; j++) {
                     this.pheromone_table[this.path_table[i][j]][this.path_table[i][j + 1]] += this.Q / length[i];
+                    this.pheromone_table[this.path_table[i][j + 1]][this.path_table[i][j]] += this.Q / length[i];
                 }
             }
-            // console.log('路径信息：', this.path_table);
+            // 求全部的信息素之和
+            for (let i = 0; i < this.pheromone_table.length; i++) {
+                for (let j = 0; j < this.pheromone_table[0].length; j++) {
+                    pheromone_sum += i !== j ? this.pheromone_table[i][j] : 0;
+                }
+            }
+            best_router_pheromone = 0;
+            for (let i = 0; i < this.cityNum - 1; i++) {
+                best_router_pheromone += this.pheromone_table[best_router[i]][best_router[i + 1]];
+            }
+            console.log('路径信息：', this.path_table);
+            console.log(`${this.iter}次最短路线信息素浓度占比：`, best_router_pheromone * 2.0 / pheromone_sum);
             // iter++
             this.iter++;
         }
-        console.log('更新后的信息素：', this.pheromone_table);
-        console.log('路径：', this.router_best);
+        // console.log('更新后的信息素：', this.pheromone_table);
     }
 
 }

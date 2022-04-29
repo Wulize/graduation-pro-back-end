@@ -16,7 +16,12 @@ const cors = require('koa2-cors');
 onerror(app)
 
 app.use(cors({
-    origin: 'http://localhost:8080',
+    origin: function(ctx) { //设置允许来自指定域名请求
+        if (ctx.header.origin === 'http://localhost:8080') {
+            return 'http://localhost:8080'; // 允许来自localhost
+        }
+        return 'http://192.168.31.82:8080';
+    },
     maxAge: 7200, //预检请求的有效期
     credentials: true, //是否允许发送Cookie
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], //设置所允许的HTTP请求方法

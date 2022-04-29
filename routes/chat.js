@@ -68,6 +68,22 @@ app.ws.use(async(ctx, next) => {
                 ctxs[data.receiver].websocket.send(JSON.stringify(info));
             }
         }
+        // 视频通话信息转发
+        else if (data.type === "offer" || data.type === "answer" || data.type === "offer_ice" || data.type === "answer_ice") {
+            let info = data;
+            if (!ctxs[data.receiver]) {
+                ctx.websocket.send(JSON.stringify({
+                    type: "chat",
+                    send_time: new Date().toLocaleString(),
+                    send_msg: '对方未上线,请稍后联系',
+                    send_id: data.receiver,
+                    send_name: '',
+                    receiver: data.send_id,
+                }));
+            } else {
+                ctxs[data.receiver].websocket.send(JSON.stringify(info));
+            }
+        }
     });
 
     ctx.websocket.on("close", (message) => {
@@ -142,7 +158,6 @@ router.get('/addFriend', async(ctx, next) => {
         friendArr_1.push({ friendName: friend, avatarUrl: friendAvatarUrl });
     if (!friendList_2.includes(userName))
         friendArr_2.push({ friendName: userName, avatarUrl: userAvatarUrl });
-    console.log(friendArr_1, friendArr_2);
     await deleteData('friendIList', { userName: userName });
     await deleteData('friendIList', { userName: friend });
     await insert('friendIList', { userName: userName, friendList: friendArr_1 });
@@ -158,6 +173,7 @@ router.get('/addFriend', async(ctx, next) => {
 
 router.get('/getMyInfo', async(ctx, next) => {
     let cookie = ctx.cookies.get('userinfo');
+    console.log(ctx);
     let userName = new Buffer(cookie, 'base64').toString();
     let result = (await getdata('IdInfo', { userName: userName }))[0] || {};
     ctx.body = {
